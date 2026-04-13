@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Talk to ARGUS</title>
+  <style>
+    body {
+      font-family: 'Times New Roman', Times, serif;
+      max-width: 560px;
+      margin: 40px auto;
+      padding: 0 20px 280px;
+    }
+
+    #convo { display: none; }
+
+    #messages {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .msg { max-width: 78%; }
+    .msg.bot { align-self: flex-start; }
+    .msg.user { align-self: flex-end; text-align: right; color: #666; }
+    .msg .ts { font-size: 11px; color: #aaa; }
+
+    #typing {
+      display: none;
+      max-width: 560px;
+      margin: 0 auto 8px;
+      padding: 0 14px;
+      color: #aaa;
+      font-style: italic;
+      font-size: 0.9em;
+      text-align: center;
+    }
+
+    #judgment { display: none; margin-top: 40px; border-top: 1px solid #ccc; padding-top: 24px; color: #444; }
+    #judgment .j-label { font-size: 11px; color: #aaa; margin-bottom: 12px; }
+    #judgment .j-body { white-space: pre-wrap; }
+
+    #input-bar {
+      display: none;
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      padding: 16px 20px;
+      pointer-events: none;
+    }
+
+    #input-inner {
+      max-width: 560px;
+      margin: 0 auto;
+      background: white;
+      padding: 12px 14px;
+      pointer-events: all;
+    }
+
+    #reply {
+      display: block;
+      width: 100%;
+      font-family: inherit;
+      font-size: 1em;
+      line-height: 1.6;
+      resize: vertical;
+      border: 1px solid #999;
+      padding: 24px;
+      min-height: 180px;
+      outline: none;
+      box-sizing: border-box;
+      overflow: auto;
+    }
+
+    #input-footer {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      margin-top: 10px;
+    }
+
+    #send-btn {
+      font-family: inherit;
+      font-size: 1em;
+      padding: 6px 18px;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    #send-btn:hover {
+      background: black;
+      color: white;
+    }
+
+    #decline-btn {
+      font-family: inherit;
+      font-size: 0.8em;
+      color: #999;
+      background: #f0f0f0;
+      border: none;
+      padding: 3px 10px;
+      cursor: pointer;
+      border-radius: 12px;
+      letter-spacing: 0.01em;
+      transition: color 0.15s, background 0.15s;
+    }
+
+    #decline-btn:hover {
+      color: #555;
+      background: #e4e4e4;
+    }
+  </style>
+</head>
+<body>
+
+<div id="landing">
+  <p>This interface is not for you.</p>
+  <p>If you have a link, use it.</p>
+</div>
+
+<div id="convo">
+  <div id="messages"></div>
+
+  <div id="judgment">
+    <div class="j-label">judgment</div>
+    <div id="j-body" class="j-body"></div>
+  </div>
+</div>
+
+<div id="input-bar">
+  <div id="typing">bot is typing...</div>
+  <div id="input-inner">
+    <div style="margin-bottom: 10px;">
+      <button id="decline-btn">decline to answer</button>
+    </div>
+    <textarea id="reply" autocomplete="off" spellcheck="false" placeholder="say as much as you want"></textarea>
+    <div id="input-footer">
+<button id="send-btn">send</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const parts  = window.location.pathname.replace(/\/$/, '').split('/');
+  const userId = (parts[1] === 'u') ? parts[2] : null;
+  const valid  = userId === 'ruth' || userId === 'shakti' || userId === 'demo';
+
+  if (valid) {
+    document.getElementById('landing').style.display = 'none';
+    document.getElementById('convo').style.display   = 'block';
+  }
+
+  let busy = false;
+
+  function ts(raw) {
+    if (!raw) return '';
+    const d = new Date(raw);
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+      + '\u2002'
+      + d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function makeMessageEl(m) {
+    const div  = document.createElement('div');
+    div.className = `msg ${m.role}`;
+    const body = document.createElement('div');
+    body.className = 'body';
+    body.textContent = m.content;
+    div.appendChild(body);
+    const t = document.createElement('div');
+    t.className = 'ts';
+    t.textContent = ts(m.created_at);
+    div.appendChild(t);
+    return div;
+  }
+
+  function render(messages) {
+    const box = document.getElementById('messages');
+    box.innerHTML = '';
+    messages.forEach(m => box.appendChild(makeMessageEl(m)));
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+  }
+
+  function appendMessage(m) {
+    const box = document.getElementById('messages');
+    box.appendChild(makeMessageEl(m));
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+  }
+
+  async function load() {
+    if (!valid) return null;
+    try {
+      const r = await fetch(`/api/conversation/${userId}`);
+      if (!r.ok) return null;
+      const d = await r.json();
+
+      render(d.messages || []);
+
+      const inputEl  = document.getElementById('input-bar');
+      const jEl      = document.getElementById('judgment');
+      const typingEl = document.getElementById('typing');
+
+      typingEl.style.display = d.generating ? 'block' : 'none';
+
+      if (d.phase === 'complete' || userId === 'demo') {
+        inputEl.style.display = 'none';
+        if (d.judgment) {
+          document.getElementById('j-body').textContent = d.judgment.content;
+          jEl.style.display = 'block';
+        }
+      } else {
+        inputEl.style.display = 'block';
+      }
+
+      return d;
+    } catch (_) { return null; }
+  }
+
+  async function send() {
+    if (busy) return;
+    const textarea = document.getElementById('reply');
+    const text = textarea.value.trim();
+    if (!text) return;
+
+    busy = true;
+    const btn = document.getElementById('send-btn');
+    btn.disabled = true;
+
+    appendMessage({ role: 'user', content: text, created_at: new Date().toISOString() });
+    textarea.value = '';
+
+    try {
+      const r = await fetch(`/api/respond/${userId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: text })
+      });
+      if (r.ok) await load();
+    } catch (_) {}
+
+    busy = false;
+    btn.disabled = false;
+  }
+
+  if (valid) {
+    document.getElementById('send-btn').addEventListener('click', send);
+
+    document.getElementById('decline-btn').addEventListener('click', function () {
+      const textarea = document.getElementById('reply');
+      textarea.value = "I'd rather not answer that.";
+      textarea.focus();
+    });
+
+    let pollTimer = null;
+
+    async function loadAndSchedule() {
+      const d = await load();
+      const interval = d && d.generating ? 3000 : 30000;
+      pollTimer = setTimeout(loadAndSchedule, interval);
+    }
+
+    loadAndSchedule();
+  }
+</script>
+</body>
+</html>
