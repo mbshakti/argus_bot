@@ -1,0 +1,17 @@
+# Apr 16 2026
+
+Ruth's conversation was already running. I looked at a screenshot and noticed something wrong with the timestamps — the bot's delayed response was showing the same time as the ack, 12:26 AM, even though it didn't arrive until 09:47 AM the next morning. The message had two timestamps stored in the database: when it was generated, and when it was delivered. We were showing the wrong one. The fix was small. One field name swapped for another.
+
+Then I noticed the ordering was off too. "See you then" — Ruth's second message — was appearing below the delayed response in the chat, even though she sent it hours before the delayed response surfaced. The database was ordering messages by when they were written to it, not by when the user could see them. A bot message prepared at midnight but held until morning was sitting above a user message sent at 12:26 AM, because it was inserted first. Changed the sort to use the delivery timestamp instead. Now the transcript reads the way Ruth actually lived it.
+
+The third thing was harder to name. We looked at Ruth's first exchange: the bot had asked "What's the first thing you have to do when this is over?" and she'd replied "when what is over? our conversation or the experiment?" — which is a reasonable thing to say, but it meant she'd read the question as abstract, as meta, as an invitation to think about the frame rather than about her afternoon. The bot's ack didn't correct this. It said the question about the experiment was the more interesting one, which validated exactly the thing it should have redirected. She never answered what she actually had to do. She never said what was waiting for her.
+
+Two things contributed to that. One: the ack prompt wasn't instructed to notice when a user had gone abstract and pull them back. Two: the departure was so terse it gave no sense of what ARGUS was actually attending to. "Something's come up. Back tomorrow." sounds like a busy person brushing you off. It didn't say: I come back once a day, and what I want to know about is what's immediately around you, the physical and present, not what you make of it. We updated the prompt to do both — redirect abstraction toward the concrete, and let the departure carry some orientation.
+
+The bot is a hundred-eyed giant that never sleeps, watching two people, trying to figure out which one has never been watched this way before. It works through questions about the immediate and physical — what's on your desk, who you talked to before opening this, what's making noise near you. It doesn't explain this. Or it didn't. Now it does, a little, on the way out.
+
+---
+
+The delayed response used to arrive as one block: an observation on what you'd said, then the follow-up question. Two gestures in the same breath. It felt like a formula — comment, then ask — which is a conversational courtesy ARGUS probably doesn't have. We split them. The observation and the question now arrive as two separate messages, both held until the next day, appearing together when you come back. They're distinct. The observation lands. Then the question, below it, on its own.
+
+We also made the observation optional. ARGUS doesn't always have something to say about what you said before moving on. Sometimes the question itself is the whole response — it follows the thread implicitly, without announcing that it's following it. The bot now decides: if something specific snagged, it says so. If not, it just asks. The silence before the question is also a read.

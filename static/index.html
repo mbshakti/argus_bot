@@ -168,7 +168,7 @@
     div.appendChild(body);
     const t = document.createElement('div');
     t.className = 'ts';
-    t.textContent = ts(m.created_at);
+    t.textContent = ts(m.deliver_at || m.created_at);
     div.appendChild(t);
     return div;
   }

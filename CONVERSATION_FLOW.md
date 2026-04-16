@@ -31,8 +31,7 @@ The departure always includes:
 - A vague, non-apologetic excuse
 - A promise to return tomorrow (never longer than a day)
 
-**Bot also generates** (but does not yet show) a full response: a longer reply + follow-up question. This is stored with a `deliver_at` timestamp set 6–30 hours in the future (30–180 seconds in FAST_MODE).
-
+**Bot also generates** (but does not yet show) a full response: a longer reply + follow-up question. This is stored with a `deliver_at` timestamp set **6–30 hours in the future**, randomly, weighted toward ~14 hours (roughly half a day).
 **User comes back the next day** and finds the full response already waiting for them. They did not watch it arrive.
 
 ---

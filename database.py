@@ -85,7 +85,7 @@ def get_visible_messages(user_id):
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     cur.execute(
         "SELECT id, role, content, created_at, deliver_at FROM messages "
-        "WHERE user_id = %s AND deliver_at <= NOW() ORDER BY id ASC",
+        "WHERE user_id = %s AND deliver_at <= NOW() ORDER BY deliver_at ASC, id ASC",
         (user_id,)
     )
     rows = cur.fetchall()

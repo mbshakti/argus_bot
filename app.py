@@ -71,9 +71,11 @@ def _respond_flow(user_id):
             ack = bot.generate_acknowledgment(history_a, history_b, user_id)
             db.add_message(user_id, 'bot', ack, msg_type='ack')
 
-            next_q = bot.generate_response(history_a, history_b, user_id, new_hypothesis)
+            observation, question = bot.generate_response(history_a, history_b, user_id, new_hypothesis)
             deliver_at = datetime.utcnow() + timedelta(seconds=bot.get_delay_seconds())
-            db.add_message(user_id, 'bot', next_q, deliver_at=deliver_at)
+            if observation:
+                db.add_message(user_id, 'bot', observation, msg_type='observation', deliver_at=deliver_at)
+            db.add_message(user_id, 'bot', question, deliver_at=deliver_at)
 
     except Exception as e:
         print(f"[bot error] user {user_id}: {e}")
