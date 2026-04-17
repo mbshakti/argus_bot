@@ -95,6 +95,24 @@ def index(user_id=None):
     return send_from_directory('static', 'index.html')
 
 
+@app.route('/preview')
+def preview_page():
+    return send_from_directory('static', 'preview.html')
+
+
+@app.route('/api/preview', methods=['POST'])
+def preview_respond():
+    data = request.get_json() or {}
+    history = data.get('history', [])
+    if not history:
+        return jsonify({'error': 'empty history'}), 400
+
+    ack = bot.generate_acknowledgment(history, [], 'ruth')
+    response_text = bot.generate_response(history, [], 'ruth', None)
+
+    return jsonify({'ack': ack, 'response': response_text})
+
+
 DEMO_MESSAGES = [
     {'role': 'bot', 'content': 'Hello.\n\nWhat\'s the nearest unfinished thing to you right now?', 'created_at': '2026-04-10T10:00:00'},
     {'role': 'user', 'content': 'There\'s a letter on my desk I started about three weeks ago and haven\'t been able to finish. It\'s to my sister. I keep meaning to get back to it but whenever I sit down to write I end up doing something else instead. I\'m not sure if it\'s that I don\'t know how to end it or that I\'m not sure I want to send it at all.', 'created_at': '2026-04-10T14:23:00'},

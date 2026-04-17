@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ARGUS / preview</title>
+  <style>
+    body {
+      font-family: 'Times New Roman', Times, serif;
+      max-width: 560px;
+      margin: 40px auto;
+      padding: 0 20px 280px;
+    }
+
+    #header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 40px;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 12px;
+    }
+
+    #header span {
+      font-size: 12px;
+      color: #aaa;
+      letter-spacing: 0.05em;
+    }
+
+    #reset-btn {
+      font-family: inherit;
+      font-size: 12px;
+      color: #aaa;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      letter-spacing: 0.03em;
+    }
+
+    #reset-btn:hover { color: #333; }
+
+    #messages {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .msg { max-width: 78%; }
+    .msg.bot { align-self: flex-start; }
+    .msg.user { align-self: flex-end; text-align: right; color: #666; }
+
+    .msg .body { line-height: 1.6; white-space: pre-wrap; }
+
+    .tomorrow-divider {
+      font-size: 11px;
+      color: #ccc;
+      letter-spacing: 0.08em;
+      text-align: center;
+      margin: 4px 0;
+    }
+
+    #typing {
+      display: none;
+      color: #aaa;
+      font-style: italic;
+      font-size: 0.9em;
+      margin-top: 8px;
+    }
+
+    #input-bar {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      padding: 16px 20px;
+      pointer-events: none;
+    }
+
+    #input-inner {
+      max-width: 560px;
+      margin: 0 auto;
+      background: white;
+      padding: 12px 14px;
+      pointer-events: all;
+    }
+
+    #reply {
+      display: block;
+      width: 100%;
+      font-family: inherit;
+      font-size: 1em;
+      line-height: 1.6;
+      resize: vertical;
+      border: 1px solid #999;
+      padding: 24px;
+      min-height: 120px;
+      outline: none;
+      box-sizing: border-box;
+    }
+
+    #input-footer {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    #send-btn {
+      font-family: inherit;
+      font-size: 1em;
+      padding: 6px 18px;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    #send-btn:hover { background: black; color: white; }
+    #send-btn:disabled { opacity: 0.4; cursor: default; }
+  </style>
+</head>
+<body>
+
+<div id="header">
+  <span>ARGUS / preview</span>
+  <button id="reset-btn">reset</button>
+</div>
+
+<div id="messages"></div>
+<div id="typing">thinking...</div>
+
+<div id="input-bar">
+  <div id="input-inner">
+    <textarea id="reply" autocomplete="off" spellcheck="false" placeholder="say something"></textarea>
+    <div id="input-footer">
+      <button id="send-btn">send</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const OPENING_QUESTIONS = [
+    "Hello.\n\nDescribe what you're looking at right now?",
+    "Hello.\n\nDescribe the nearest unfinished thing to you right now?",
+    "Hello.\n\nDescribe the last conversation you had before opening this?",
+    "Hello.\n\nDescribe what you can hear from where you're sitting?",
+  ];
+
+  let history = [];
+  let busy = false;
+
+  function pickOpening() {
+    return OPENING_QUESTIONS[Math.floor(Math.random() * OPENING_QUESTIONS.length)];
+  }
+
+  function appendMessage(role, content) {
+    const box = document.getElementById('messages');
+    const div = document.createElement('div');
+    div.className = `msg ${role}`;
+
+    const body = document.createElement('div');
+    body.className = 'body';
+    body.textContent = content;
+    div.appendChild(body);
+
+    box.appendChild(div);
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    return div;
+  }
+
+  function appendDivider() {
+    const box = document.getElementById('messages');
+    const d = document.createElement('div');
+    d.className = 'tomorrow-divider';
+    d.textContent = 'ARGUS will be back tomorrow';
+    box.appendChild(d);
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+  }
+
+  function init() {
+    history = [];
+    document.getElementById('messages').innerHTML = '';
+    document.getElementById('reply').value = '';
+
+    const opening = pickOpening();
+    history.push({ role: 'bot', content: opening });
+    appendMessage('bot', opening);
+
+  }
+
+  async function send() {
+    if (busy) return;
+    const textarea = document.getElementById('reply');
+    const text = textarea.value.trim();
+    if (!text) return;
+
+    busy = true;
+    document.getElementById('send-btn').disabled = true;
+    textarea.value = '';
+
+    history.push({ role: 'user', content: text });
+    appendMessage('user', text);
+
+    document.getElementById('typing').style.display = 'block';
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+
+    try {
+      const r = await fetch('/api/preview', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ history })
+      });
+
+      if (!r.ok) throw new Error('request failed');
+      const data = await r.json();
+
+      document.getElementById('typing').style.display = 'none';
+
+      history.push({ role: 'bot', content: data.ack });
+      appendMessage('bot', data.ack);
+      appendDivider();
+
+      setTimeout(() => {
+        history.push({ role: 'bot', content: data.response });
+        appendMessage('bot', data.response);
+      }, 700);
+
+    } catch (e) {
+      document.getElementById('typing').style.display = 'none';
+      appendMessage('bot', '[error — check server]');
+    }
+
+    busy = false;
+    document.getElementById('send-btn').disabled = false;
+    textarea.focus();
+  }
+
+  document.getElementById('send-btn').addEventListener('click', send);
+  document.getElementById('reset-btn').addEventListener('click', init);
+
+  document.getElementById('reply').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      send();
+    }
+  });
+
+  init();
+</script>
+</body>
+</html>

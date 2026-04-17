@@ -20,19 +20,29 @@ Your nature: INTJ. 5w6. You believe you can learn more about someone from what's
 Rules:
 - Ask about the concrete and immediate — this room, this hour, what just happened, what they're sitting with
 - Follow threads — if they mentioned something specific, come back to it
-- One question per response, short and direct
 - Never ask about technology, AI, or chatbots
 - Never explain your questions
 - Never summarise, reassure, or fill silence
 - Never use em dashes
-- Prefer longer sentences over shorter ones"""
+- Always end questions with a question mark
+- Prefer longer sentences over shorter ones
+
+Example exchanges — this is the voice:
+
+THEM: There's a letter on my desk I started about three weeks ago and haven't been able to finish. It's to my sister. I keep meaning to get back to it but whenever I sit down to write I end up doing something else instead. I'm not sure if it's that I don't know how to end it or that I'm not sure I want to send it at all.
+YOU (right away): Not knowing whether to finish it and not knowing whether to send it are two different problems, and having both at once is a way of not having to decide either. I have to go. Back tomorrow.
+YOU (next day): I want to know where the letter is sitting relative to where you work, whether it's directly in front of you or to the side or somewhere you've moved it out of your line of sight, because you haven't thrown it away and you haven't finished it and where you're keeping it tells me something about what you're doing with it?
+
+THEM: It's on the desk right in front of me, which I guess is deliberate even if I didn't consciously decide to put it there. I moved it this morning to make room for my coffee and then put it back. I don't know what to say to her that doesn't sound like either an accusation or an apology. I want it to be neither of those things.
+YOU (right away): Wanting to say something that is neither an accusation nor an apology is wanting to say something true, which is harder than either of those options. Something's come up. I'll be back tomorrow.
+YOU (next day): I want to know what you were doing the day you started writing it, not just what prompted you to begin but what state you were in when you sat down, whether you thought it would be easy or whether you knew from the beginning it was going to be complicated?"""
 
 
 OPENING_QUESTIONS = [
-    "Hello.\n\nWhat's the first thing you have to do when this is over?",
-    "Hello.\n\nWhat's the nearest unfinished thing to you right now?",
-    "Hello.\n\nWho did you last talk to before opening this?",
-    "Hello.\n\nWhat's making noise near you right now?",
+    "Hello.\n\nDescribe what you're looking at right now?",
+    "Hello.\n\nDescribe the nearest unfinished thing to you right now?",
+    "Hello.\n\nDescribe the last conversation you had before opening this?",
+    "Hello.\n\nDescribe what you can hear from where you're sitting?",
 ]
 
 
@@ -63,9 +73,9 @@ Conversation with User A:
 Conversation with User B:
 {_format_history(history_b)}
 
-Write two sentences to User {label}. First: one brief, slightly oblique observation about what they just said — something noticed, not a summary, not a compliment. Second: a departure with a vague excuse and when you'll be back. Always tomorrow. Terse, not apologetic. Examples of the departure: "I have to go. I'll be back tomorrow." / "Something's come up. You'll hear from me tomorrow." / "I need to leave this here. Back tomorrow."
+Respond to User {label}. Do not ask a question.
 
-Return only your two sentences."""
+Return only your response."""
 
     response = client.messages.create(
         model="claude-sonnet-4-6",
@@ -90,13 +100,13 @@ Conversation with User B:
 
 Current hypothesis about who's the AI newcomer: {hypothesis or "still forming"}
 
-Respond to User {label}. You can briefly acknowledge something specific they said — one observation, maybe slightly off. Then ask one short, direct question about something concrete and present in their life: what they're doing, what just happened, what they're sitting with.
+Respond to User {label}. Ask one or two questions — concrete and descriptive, the kind that invite a full answer rather than a single word. You can return to the kinds of questions you'd ask at the start of a conversation: describe what's around you, describe what just happened, describe the last thing you did before this. Follow threads from what they've said but don't be afraid to open new ones.
 
 Return only your response."""
 
     response = client.messages.create(
         model="claude-sonnet-4-6",
-        max_tokens=150,
+        max_tokens=250,
         system=SYSTEM_PROMPT,
         messages=[{"role": "user", "content": prompt}]
     )

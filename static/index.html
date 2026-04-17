@@ -36,6 +36,14 @@
       text-align: center;
     }
 
+    .tomorrow-divider {
+      font-size: 11px;
+      color: #ccc;
+      letter-spacing: 0.08em;
+      text-align: center;
+      margin: 4px 0;
+    }
+
     #judgment { display: none; margin-top: 40px; border-top: 1px solid #ccc; padding-top: 24px; color: #444; }
     #judgment .j-label { font-size: 11px; color: #aaa; margin-bottom: 12px; }
     #judgment .j-body { white-space: pre-wrap; }
@@ -173,16 +181,27 @@
     return div;
   }
 
+  function makeDivider() {
+    const d = document.createElement('div');
+    d.className = 'tomorrow-divider';
+    d.textContent = 'ARGUS will be back tomorrow';
+    return d;
+  }
+
   function render(messages) {
     const box = document.getElementById('messages');
     box.innerHTML = '';
-    messages.forEach(m => box.appendChild(makeMessageEl(m)));
+    messages.forEach(m => {
+      box.appendChild(makeMessageEl(m));
+      if (m.msg_type === 'ack') box.appendChild(makeDivider());
+    });
     window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
   }
 
   function appendMessage(m) {
     const box = document.getElementById('messages');
     box.appendChild(makeMessageEl(m));
+    if (m.msg_type === 'ack') box.appendChild(makeDivider());
     window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
   }
 
