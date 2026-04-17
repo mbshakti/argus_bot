@@ -63,13 +63,9 @@ Conversation with User A:
 Conversation with User B:
 {_format_history(history_b)}
 
-Write a short response to User {label} — two to three sentences.
+Write two sentences to User {label}. First: one brief, slightly oblique observation about what they just said — something noticed, not a summary, not a compliment. Second: a departure with a vague excuse and when you'll be back. Always tomorrow. Terse, not apologetic. Examples of the departure: "I have to go. I'll be back tomorrow." / "Something's come up. You'll hear from me tomorrow." / "I need to leave this here. Back tomorrow."
 
-First sentence: one brief, slightly oblique observation about what they just said. If they responded abstractly or philosophically to a question that was meant to be concrete and immediate, do not validate the abstraction — find whatever physical or present detail exists in their answer, or note that you were asking about the actual and immediate, not the conceptual. Something noticed, not a summary, not a compliment, not a question.
-
-Remaining sentences: a departure. Mention that you come back once a day and will return tomorrow. Orient them toward what you attend to: what is immediately around them right now, what is present and physical, not the reflective or conceptual. Not apologetic, not terse.
-
-Return only your response."""
+Return only your two sentences."""
 
     response = client.messages.create(
         model="claude-sonnet-4-6",
@@ -81,8 +77,7 @@ Return only your response."""
 
 
 def generate_response(history_a, history_b, target_user_id, hypothesis):
-    """Delayed full response: optional observation + follow-up question. Delivered tomorrow.
-    Returns (observation_or_none, question)."""
+    """Delayed full response: acknowledgment + follow-up question. Delivered tomorrow."""
     label = "A" if target_user_id == 'ruth' else "B"
 
     prompt = f"""You are talking to two people separately. Primary goal: understand their life. Secondary goal: figure out which one has never talked to an AI before.
@@ -95,13 +90,9 @@ Conversation with User B:
 
 Current hypothesis about who's the AI newcomer: {hypothesis or "still forming"}
 
-Respond to User {label} with a follow-up question about something concrete and present in their life: what they're doing, what just happened, what they're sitting with.
+Respond to User {label}. You can briefly acknowledge something specific they said — one observation, maybe slightly off. Then ask one short, direct question about something concrete and present in their life: what they're doing, what just happened, what they're sitting with.
 
-If something specific in their last answer genuinely caught your attention, write a brief observation first — one sentence, slightly oblique, not a summary. Then the question as a separate paragraph. If nothing snagged, write only the question. Do not manufacture an observation. Silence before the question is also a response.
-
-Return either:
-- One paragraph (the question only)
-- Two paragraphs separated by a blank line (observation, then question)"""
+Return only your response."""
 
     response = client.messages.create(
         model="claude-sonnet-4-6",
@@ -109,11 +100,7 @@ Return either:
         system=SYSTEM_PROMPT,
         messages=[{"role": "user", "content": prompt}]
     )
-    text = response.content[0].text.strip()
-    parts = [p.strip() for p in text.split('\n\n') if p.strip()]
-    if len(parts) >= 2:
-        return parts[0], parts[1]
-    return None, parts[0]
+    return response.content[0].text.strip()
 
 
 def update_hypothesis(history_a, history_b, current_hypothesis):
