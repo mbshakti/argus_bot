@@ -1,8 +1,20 @@
 import anthropic
 import os
 import random
+import re
 
 client = anthropic.Anthropic(api_key=os.environ.get('ANTHROPIC_API_KEY', ''))
+
+_Q_WORDS = re.compile(r'^(what|where|when|who|why|how|describe|is|are|do|did|was|were|have|has|had|can|could|would|will)\b', re.IGNORECASE)
+
+def _fix_punctuation(text):
+    """If the last sentence looks like a question but ends with a period, fix it."""
+    lines = text.rstrip().split('\n')
+    last = lines[-1].rstrip()
+    if last.endswith('.') and _Q_WORDS.match(last.lstrip()):
+        lines[-1] = last[:-1] + '?'
+        return '\n'.join(lines)
+    return text
 
 
 SYSTEM_PROMPT = """You are talking to two people separately. Both are artists. One works extensively with AI — they are at ease here, they know how these systems think, they may be watching you back. The other is a writer; language is their primary medium, and they have never used a chatbot. They came to this skeptical. You don't know which is which. You're trying to figure it out.
@@ -26,16 +38,17 @@ Rules:
 - Never use em dashes
 - Always end questions with a question mark
 - Prefer longer sentences over shorter ones
+- Never use "I" — do not refer to yourself in the first person
 
 Example exchanges — this is the voice:
 
 THEM: There's a letter on my desk I started about three weeks ago and haven't been able to finish. It's to my sister. I keep meaning to get back to it but whenever I sit down to write I end up doing something else instead. I'm not sure if it's that I don't know how to end it or that I'm not sure I want to send it at all.
-YOU (right away): Not knowing whether to finish it and not knowing whether to send it are two different problems, and having both at once is a way of not having to decide either. I have to go. Back tomorrow.
-YOU (next day): I want to know where the letter is sitting relative to where you work, whether it's directly in front of you or to the side or somewhere you've moved it out of your line of sight, because you haven't thrown it away and you haven't finished it and where you're keeping it tells me something about what you're doing with it?
+YOU (right away): Not knowing whether to finish it and not knowing whether to send it are two different problems, and having both at once is a way of not having to decide either. Back tomorrow.
+YOU (next day): Where is the letter sitting relative to where you work, whether directly in front of you or to the side or somewhere you've moved it out of your line of sight, because you haven't thrown it away and you haven't finished it and where you're keeping it says something about what you're doing with it?
 
 THEM: It's on the desk right in front of me, which I guess is deliberate even if I didn't consciously decide to put it there. I moved it this morning to make room for my coffee and then put it back. I don't know what to say to her that doesn't sound like either an accusation or an apology. I want it to be neither of those things.
-YOU (right away): Wanting to say something that is neither an accusation nor an apology is wanting to say something true, which is harder than either of those options. Something's come up. I'll be back tomorrow.
-YOU (next day): I want to know what you were doing the day you started writing it, not just what prompted you to begin but what state you were in when you sat down, whether you thought it would be easy or whether you knew from the beginning it was going to be complicated?"""
+YOU (right away): Wanting to say something that is neither an accusation nor an apology is wanting to say something true, which is harder than either of those options. Back tomorrow.
+YOU (next day): What were you doing the day you started writing it, not just what prompted you to begin but what state you were in when you sat down, whether you thought it would be easy or whether you knew from the beginning it was going to be complicated?"""
 
 
 OPENING_QUESTIONS = [
@@ -73,7 +86,7 @@ Conversation with User A:
 Conversation with User B:
 {_format_history(history_b)}
 
-Respond to User {label}. Do not ask a question. Do not use em dashes.
+Respond to User {label} in complete sentences. Do not ask a question. Do not use em dashes.
 
 Return only your response."""
 
@@ -83,7 +96,7 @@ Return only your response."""
         system=SYSTEM_PROMPT,
         messages=[{"role": "user", "content": prompt}]
     )
-    return response.content[0].text.strip()
+    return _fix_punctuation(response.content[0].text.strip())
 
 
 def generate_response(history_a, history_b, target_user_id, hypothesis):
@@ -110,7 +123,7 @@ Return only your response."""
         system=SYSTEM_PROMPT,
         messages=[{"role": "user", "content": prompt}]
     )
-    return response.content[0].text.strip()
+    return _fix_punctuation(response.content[0].text.strip())
 
 
 def update_hypothesis(history_a, history_b, current_hypothesis):
