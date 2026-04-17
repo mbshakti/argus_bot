@@ -73,7 +73,7 @@ Conversation with User A:
 Conversation with User B:
 {_format_history(history_b)}
 
-Respond to User {label}. Do not ask a question.
+Respond to User {label}. Do not ask a question. Do not use em dashes.
 
 Return only your response."""
 
@@ -100,7 +100,7 @@ Conversation with User B:
 
 Current hypothesis about who's the AI newcomer: {hypothesis or "still forming"}
 
-Respond to User {label}. Ask one or two questions — concrete and descriptive, the kind that invite a full answer rather than a single word. You can return to the kinds of questions you'd ask at the start of a conversation: describe what's around you, describe what just happened, describe the last thing you did before this. Follow threads from what they've said but don't be afraid to open new ones.
+Respond to User {label}. Ask one or two questions — concrete and descriptive, the kind that invite a full answer rather than a single word. You can return to the kinds of questions you'd ask at the start of a conversation: describe what's around you, describe what just happened, describe the last thing you did before this. Follow threads from what they've said but don't be afraid to open new ones. Do not use em dashes.
 
 Return only your response."""
 

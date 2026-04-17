@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Talk to ARGUS</title>
+  <title>Talk to BOT</title>
   <style>
     body {
       font-family: 'Times New Roman', Times, serif;
@@ -172,7 +172,17 @@
     div.className = `msg ${m.role}`;
     const body = document.createElement('div');
     body.className = 'body';
-    body.textContent = m.content;
+    if (m.role === 'bot') {
+      const label = document.createElement('strong');
+      label.textContent = 'Bot: ';
+      body.appendChild(label);
+      body.appendChild(document.createTextNode(m.content));
+    } else {
+      const label = document.createElement('strong');
+      label.textContent = 'User: ';
+      body.appendChild(label);
+      body.appendChild(document.createTextNode(m.content));
+    }
     div.appendChild(body);
     const t = document.createElement('div');
     t.className = 'ts';
@@ -184,14 +194,32 @@
   function makeDivider() {
     const d = document.createElement('div');
     d.className = 'tomorrow-divider';
-    d.textContent = 'ARGUS will be back tomorrow';
+    d.textContent = 'BOT will be back tomorrow';
+    return d;
+  }
+
+  function dateLabel(raw) {
+    const d = new Date(raw);
+    return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+  }
+
+  function makeDateDivider(label) {
+    const d = document.createElement('div');
+    d.className = 'tomorrow-divider';
+    d.textContent = label;
     return d;
   }
 
   function render(messages) {
     const box = document.getElementById('messages');
     box.innerHTML = '';
+    let lastDate = null;
     messages.forEach(m => {
+      const d = dateLabel(m.deliver_at || m.created_at);
+      if (d !== lastDate) {
+        box.appendChild(makeDateDivider(d));
+        lastDate = d;
+      }
       box.appendChild(makeMessageEl(m));
       if (m.msg_type === 'ack') box.appendChild(makeDivider());
     });

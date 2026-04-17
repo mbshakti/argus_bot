@@ -158,7 +158,17 @@
 
     const body = document.createElement('div');
     body.className = 'body';
-    body.textContent = content;
+    if (role === 'bot') {
+      const label = document.createElement('strong');
+      label.textContent = 'Bot: ';
+      body.appendChild(label);
+      body.appendChild(document.createTextNode(content));
+    } else {
+      const label = document.createElement('strong');
+      label.textContent = 'User: ';
+      body.appendChild(label);
+      body.appendChild(document.createTextNode(content));
+    }
     div.appendChild(body);
 
     box.appendChild(div);
@@ -170,7 +180,7 @@
     const box = document.getElementById('messages');
     const d = document.createElement('div');
     d.className = 'tomorrow-divider';
-    d.textContent = 'ARGUS will be back tomorrow';
+    d.textContent = 'BOT will be back tomorrow';
     box.appendChild(d);
     window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
   }
