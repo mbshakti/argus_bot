@@ -209,6 +209,19 @@ def status():
     })
 
 
+@app.route('/api/admin/force-judgment', methods=['POST'])
+def force_judgment():
+    history_a = db.get_all_messages('ruth')
+    history_b = db.get_all_messages('shakti')
+    judgment_text = bot.generate_final_judgment(history_a, history_b)
+    db.save_judgment(judgment_text)
+    db.set_phase('ruth', 'complete')
+    db.set_phase('shakti', 'complete')
+    db.add_message('ruth', 'bot', judgment_text)
+    db.add_message('shakti', 'bot', judgment_text)
+    return jsonify({'ok': True, 'judgment': judgment_text})
+
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5001))
     debug = os.environ.get('DEBUG', '1') == '1'
