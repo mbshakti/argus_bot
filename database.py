@@ -239,6 +239,16 @@ def accelerate_pending():
     conn.close()
 
 
+def delete_long_bot_messages():
+    """Remove any bot messages longer than 800 chars — these are misrouted judgment messages."""
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM messages WHERE role = 'bot' AND LENGTH(content) > 800")
+    conn.commit()
+    cur.close()
+    conn.close()
+
+
 def reset_all():
     conn = get_db()
     cur = conn.cursor()

@@ -65,8 +65,6 @@ def _respond_flow(user_id):
             db.save_judgment(judgment_text)
             db.set_phase('ruth', 'complete')
             db.set_phase('shakti', 'complete')
-            db.add_message('ruth', 'bot', judgment_text)
-            db.add_message('shakti', 'bot', judgment_text)
         else:
             ack = bot.generate_acknowledgment(history_a, history_b, user_id)
             db.add_message(user_id, 'bot', ack, msg_type='ack')
@@ -211,14 +209,13 @@ def status():
 
 @app.route('/api/admin/force-judgment', methods=['POST'])
 def force_judgment():
+    db.delete_long_bot_messages()
     history_a = db.get_all_messages('ruth')
     history_b = db.get_all_messages('shakti')
     judgment_text = bot.generate_final_judgment(history_a, history_b)
     db.save_judgment(judgment_text)
     db.set_phase('ruth', 'complete')
     db.set_phase('shakti', 'complete')
-    db.add_message('ruth', 'bot', judgment_text)
-    db.add_message('shakti', 'bot', judgment_text)
     return jsonify({'ok': True, 'judgment': judgment_text})
 
 
